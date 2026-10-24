@@ -465,7 +465,7 @@ function voiceSupport() {
    ===================================================================== */
 const NUMS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
 function norm(w) {
-  let s = String(w).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/&/g, 'and').replace(/[^\p{L}\p{N}]+/gu, '');
+  let s = String(w).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, 'and').replace(/[^\p{L}\p{N}]+/gu, '');
   const n = NUMS.indexOf(s); if (n >= 0) s = String(n);
   return s;
 }
@@ -488,7 +488,7 @@ class VoiceMatcher {
   constructor(displayWords) {
     this.units = []; this.unitWord = [];
     displayWords.forEach((w, i) => {
-      for (const part of w.split(/[-–—/]+/)) { const n = norm(part); if (n) { this.units.push(n); this.unitWord.push(i); } }
+      for (const part of w.split(/[-\u2013\u2014/]+/)) { const n = norm(part); if (n) { this.units.push(n); this.unitWord.push(i); } }
     });
     this.N = displayWords.length; this.pos = 0; this.pending = null;
   }
@@ -526,7 +526,7 @@ class VoiceMatcher {
 class VoiceFollow {
   constructor(words, { lang, onWord, onStatus }) {
     this.m = new VoiceMatcher(words); this.lang = lang; this.onWord = onWord; this.onStatus = onStatus;
-    this.active = false; this.rec = null; this.consumed = {}; this.fatal = false;
+    this.active = false; this.rec = null; this.consumed = {}; this.fatal = false; this.netErrors = 0;
   }
   start() {
     if (!SR) { this.onStatus('error', 'No speech recognition in this browser.'); return; }
@@ -539,7 +539,7 @@ class VoiceFollow {
     if (this.lang) r.lang = this.lang; else r.lang = navigator.language || 'en-US';
     this.consumed = {};
     r.onstart = () => this.onStatus('live', 'Listening…');
-    r.onresult = e => this.handle(e);
+    r.onresult = e => { this.netErrors = 0; this.handle(e); };
     r.onerror = e => {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
       const msg = {
@@ -549,12 +549,13 @@ class VoiceFollow {
         'audio-capture': 'No microphone found, or another app is using it.',
         'language-not-supported': 'This language is not supported for voice-follow here.'
       }[e.error] || ('Speech recognition error: ' + e.error);
-      if (e.error !== 'network') this.fatal = true;
+      // a network error can be a blip; give up after 3 in a row
+      if (e.error !== 'network' || ++this.netErrors >= 3) this.fatal = true;
       this.onStatus('error', msg);
     };
     r.onend = () => {
       if (this.rec !== r) return;
-      if (this.active && !this.fatal) setTimeout(() => { if (this.active && this.rec === r) this._open(); }, 250);
+      if (this.active && !this.fatal) setTimeout(() => { if (this.active && this.rec === r) this._open(); }, 250 + 750 * this.netErrors);
       else { this.active = false; if (!this.fatal) this.onStatus('idle', 'Voice paused'); }
     };
     this.rec = r;
@@ -801,6 +802,7 @@ function b32decode(s) {
     val = (val << 5) | v; bits += 5;
     if (bits >= 8) { out.push((val >>> (bits - 8)) & 255); bits -= 8; }
   }
+  if (val & ((1 << bits) - 1)) return null; // leftover padding bits must be zero
   return new Uint8Array(out);
 }
 async function verifyLicense(raw) {
@@ -834,6 +836,10 @@ const S = {
   settings: Object.assign({ font: 56, wpm: 140, recFont: 32, mirror: false, mode: 'fixed', lang: '' }, store.get('settings', {})),
   pro: false, license: null
 };
+{ const st = S.settings, num = (v, a, b, d) => Number.isFinite(+v) ? clamp(Math.round(+v), a, b) : d;
+  st.font = num(st.font, 24, 160, 56); st.recFont = num(st.recFont, 24, 160, 32); st.wpm = num(st.wpm, 60, 220, 140);
+  st.mirror = !!st.mirror; if (st.mode !== 'voice') st.mode = 'fixed'; if (typeof st.lang !== 'string') st.lang = '';
+  if (Array.isArray(S.scripts)) S.scripts = S.scripts.filter(x => x && typeof x.id === 'string' && typeof x.text === 'string'); }
 const WELCOME = `Welcome to CueCast.
 
 This is your script. Replace this text with your own — it saves automatically as you type.
@@ -1008,13 +1014,20 @@ function flushSave() {
   if (saveT) { clearTimeout(saveT); saveT = null; }
   const s = cur(); if (!s) return;
   const title = $('#title').value.trim() || 'Untitled script', text = $('#body').value;
-  if (s.title === title && s.text === text) return;
+  if (s.title === title && s.text === text) { $('#saveState').textContent = '✓ Saved on this device'; return; }
   s.title = title; s.text = text; s.updated = Date.now(); saveScripts(); renderList();
 }
 $('#body').addEventListener('input', () => { updateMeta(); queueSave(); });
 $('#title').addEventListener('input', queueSave);
 $('#title').addEventListener('blur', flushSave);
 window.addEventListener('pagehide', flushSave);
+window.addEventListener('storage', e => {
+  if (e.key !== 'cuecast.scripts' || saveT) return; // keep local unsaved typing
+  const next = store.get('scripts', null); if (!Array.isArray(next) || !next.length) return;
+  S.scripts = next; if (!cur()) S.currentId = S.scripts[0].id;
+  if (route() === 'app' && document.activeElement !== $('#body') && document.activeElement !== $('#title')) loadEditor();
+  renderList();
+});
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 
 /* =====================================================================
@@ -1114,7 +1127,10 @@ $('#promptBar').addEventListener('click', e => {
 function toggleFs() {
   const d = document, el = d.documentElement;
   if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
-  else if (el.requestFullscreen || el.webkitRequestFullscreen) (el.requestFullscreen || el.webkitRequestFullscreen).call(el).catch?.(() => {});
+  else if (el.requestFullscreen || el.webkitRequestFullscreen) {
+    const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    if (r && r.catch) r.catch(() => toast('Full screen was blocked by the browser.'));
+  }
   else toast('Full screen is not available in this browser. On iPhone, use "Add to Home Screen".');
 }
 function openPrompter() {
@@ -1132,6 +1148,7 @@ document.addEventListener('keydown', e => {
   if (e.target.matches('input, textarea, select') || dlg.open) return;
   const pr = r === 'prompt' ? P : R.pr, fk = r === 'prompt' ? 'font' : 'recFont';
   const k = e.key;
+  if (k === ' ') document.activeElement?.blur?.(); // a focused bar button must not also toggle
   if (k === ' ' || k === 'Spacebar') { e.preventDefault(); r === 'prompt' ? P.toggle() : R.pr.o.onTap(); }
   else if (k === 'ArrowUp') { e.preventDefault(); adjust(pr, 'faster', fk); }
   else if (k === 'ArrowDown') { e.preventDefault(); adjust(pr, 'slower', fk); }
@@ -1139,7 +1156,7 @@ document.addEventListener('keydown', e => {
   else if (k === '-' || k === '_') adjust(pr, 'smaller', fk);
   else if ((k === 'r' || k === 'R') && r === 'prompt') P.start();
   else if ((k === 'm' || k === 'M') && r === 'prompt') { S.settings.mirror = !S.settings.mirror; P.setMirror(S.settings.mirror); saveSettings(); renderSettings(); }
-  else if (k === 'Escape' && r === 'prompt') location.hash = '#/app';
+  else if (k === 'Escape') { if (r === 'record' && R.recording()) toast('Stop the recording first (■ Stop), so your take isn\'t lost.'); else location.hash = '#/app'; }
   else return;
   syncBar(r === 'prompt' ? $('#promptBar') : $('#recBar'), pr);
 });
@@ -1154,7 +1171,13 @@ const R = {
 R.ctx = R.canvas.getContext('2d');
 R.pr = new Prompter($('#recHost'), {
   onState: s => syncBar($('#recBar'), R.pr, s),
-  onTap: () => { if (R.pr.state === 'running') R.pr.pause(); else if (R.pr.state === 'paused') R.pr.resume(); else if (!R.recording()) startRecording(); }
+  onTap: () => {
+    const st = R.pr.state;
+    if (st === 'running') R.pr.pause();
+    else if (st === 'paused') R.pr.resume();
+    else if (st === 'countdown') stopRecording();
+    else if (!R.recording()) startRecording();
+  }
 });
 R.recording = () => R.recorder && R.recorder.state === 'recording';
 function pickMime() {
@@ -1178,7 +1201,13 @@ async function startCamera() {
   if (!navigator.mediaDevices?.getUserMedia) { msg.textContent = 'Camera recording is not available here. It needs a secure (https) page in a modern browser.'; return false; }
   if (!window.MediaRecorder) { msg.textContent = 'This browser cannot record video (no MediaRecorder). Try Chrome, Edge, Firefox or Safari 14.1+.'; return false; }
   try {
-    R.stream = await navigator.mediaDevices.getUserMedia({ video: camConstraints(R.facing), audio: { echoCancellation: true, noiseSuppression: true } });
+    try {
+      R.stream = await navigator.mediaDevices.getUserMedia({ video: camConstraints(R.facing), audio: { echoCancellation: true, noiseSuppression: true } });
+    } catch (e) {
+      if (e.name !== 'NotFoundError' && e.name !== 'NotReadableError') throw e;
+      R.stream = await navigator.mediaDevices.getUserMedia({ video: camConstraints(R.facing), audio: false });
+      toast('No microphone available — recording video without sound.', 5000);
+    }
   } catch (e) {
     msg.textContent = e.name === 'NotAllowedError' ? 'Camera or microphone permission was blocked. Allow it in your browser\'s address bar, then reopen recording.'
       : e.name === 'NotFoundError' ? 'No camera or microphone was found on this device.' : 'Could not start the camera: ' + (e.message || e.name);
@@ -1228,14 +1257,20 @@ async function startRecording() {
   const mime = pickMime();
   if (mime === null) { toast('This browser cannot record video.'); return; }
   $('#take').hidden = true;
-  $('#recBtn').disabled = true;
+  setRecBtn('cancel');
   R.pr.start(() => {
     // Recording starts when the countdown ends, together with scrolling.
     R.clean = S.pro; R.drawing = true; drawFrame();
     const vs = R.canvas.captureStream(30);
     const mixed = new MediaStream([...vs.getVideoTracks(), ...R.stream.getAudioTracks()]);
-    try { R.recorder = new MediaRecorder(mixed, mime ? { mimeType: mime, videoBitsPerSecond: 5e6 } : undefined); }
-    catch { R.recorder = new MediaRecorder(mixed); }
+    try {
+      try { R.recorder = new MediaRecorder(mixed, mime ? { mimeType: mime, videoBitsPerSecond: 5e6 } : undefined); }
+      catch { R.recorder = new MediaRecorder(mixed); }
+    } catch (err) {
+      vs.getTracks().forEach(t => t.stop()); R.drawing = false; R.recorder = null; R.pr.reset(); setRecBtn('idle');
+      toast('This browser could not start recording: ' + (err.message || err.name), 5000); return;
+    }
+    R.vs = vs;
     R.mime = R.recorder.mimeType || mime || 'video/webm';
     R.chunks = [];
     R.recorder.ondataavailable = e => { if (e.data && e.data.size) R.chunks.push(e.data); };
@@ -1243,17 +1278,20 @@ async function startRecording() {
     R.recorder.start(1000);
     R.t0 = Date.now(); $('#recTimer').classList.add('on');
     R.timer = setInterval(() => $('#recTimer').textContent = mmss(Date.now() - R.t0), 250);
-    const b = $('#recBtn'); b.disabled = false; b.textContent = '■ Stop'; b.classList.add('stop');
+    setRecBtn('stop');
   });
-  // if the countdown is cancelled, re-enable the button
-  setTimeout(() => { if (R.pr.state === 'idle') $('#recBtn').disabled = false; }, 3200);
+}
+function setRecBtn(mode) {
+  const b = $('#recBtn');
+  b.textContent = { idle: '● Record', cancel: '✕ Cancel', stop: '■ Stop' }[mode];
+  b.classList.toggle('stop', mode === 'stop');
 }
 function stopRecording() {
-  if (R.pr.state === 'countdown') { R.pr.reset(); $('#recBtn').disabled = false; return; }
+  if (R.pr.state === 'countdown' && !R.recording()) { R.pr.reset(); setRecBtn('idle'); return; }
   if (!R.recording()) return;
   R.recorder.stop(); clearInterval(R.timer); R.pr.pause();
   $('#recTimer').classList.remove('on');
-  const b = $('#recBtn'); b.textContent = '● Record'; b.classList.remove('stop');
+  setRecBtn('idle');
 }
 function showTake() {
   const blob = new Blob(R.chunks, { type: R.mime.split(';')[0] });
@@ -1286,9 +1324,11 @@ $('#recBar').addEventListener('click', e => {
 $('#takeAgain').onclick = () => { $('#take').hidden = true; $('#takeVideo').pause(); R.pr.reset(); startRecording(); };
 $('#takeDone').onclick = () => { $('#take').hidden = true; $('#takeVideo').pause(); R.pr.reset(); };
 function closeRecorder() {
-  if (R.recording()) { R.recorder.onstop = () => { R.drawing = false; }; R.recorder.stop(); clearInterval(R.timer); }
+  // closing mid-take discards it and releases the canvas capture track
+  if (R.recording()) { R.recorder.onstop = null; R.recorder.stop(); clearInterval(R.timer); }
+  R.vs?.getTracks().forEach(t => t.stop());
   R.drawing = false; R.pr.deactivate(); stopCamera(); $('#takeVideo').pause();
-  const b = $('#recBtn'); b.textContent = '● Record'; b.classList.remove('stop'); b.disabled = false;
+  $('#recTimer').classList.remove('on'); setRecBtn('idle');
 }
 
 /* =====================================================================
@@ -1350,14 +1390,15 @@ $('#goRecord').onclick = () => { location.hash = '#/record'; };
   const qs = new URLSearchParams(location.search), hk = location.hash.match(/^#key=(.+)$/);
   const linkKey = qs.get('key') || (hk && decodeURIComponent(hk[1]));
   if (linkKey) history.replaceState(null, '', location.pathname + '#/app');
-  saveScripts(); renderSettings(); refreshTier(); onRoute();
+  saveScripts();
+  // check the stored key before routing, so a Pro user opening #/prompt directly gets voice mode
   const stored = store.get('license', null);
   if (stored) {
     const r = await verifyLicense(stored);
     if (r.ok) { S.pro = true; S.license = r; }
     else if (r.expired) toast(r.reason, 6000);
-    refreshTier();
   }
+  renderSettings(); refreshTier(); onRoute();
   if (linkKey) {
     const r = await activateKey(linkKey);
     if (!r.ok) openDialog(`<h3>License key problem</h3><p>${esc(r.reason)}</p><div class="btns"><button class="primary" data-close>OK</button></div>`);

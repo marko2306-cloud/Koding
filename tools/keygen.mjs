@@ -70,6 +70,7 @@ async function verify(raw) {
   const sigStr = rest.join('');
   const bytes = []; let bits = 0, val = 0;
   for (const ch of sigStr) { const v = ALPHA.indexOf(ch); if (v < 0) return false; val = (val << 5) | v; bits += 5; if (bits >= 8) { bytes.push((val >>> (bits - 8)) & 255); bits -= 8; } }
+  if (val & ((1 << bits) - 1)) return false; // padding bits must be zero, same as index.html
   if (cc !== 'CC' || bytes.length !== 64) return false;
   return crypto.subtle.verify(SIGN, pub, new Uint8Array(bytes), message(plan, exp, id));
 }
