@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<meta name="description" content="CueCast is a browser teleprompter for TikTok, Reels, YouTube and Zoom. Voice-follow scrolling, true words-per-minute speed and in-browser recording. $6/month or $39 lifetime.">
+<title>CueCast — Voice-Follow Teleprompter</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237c5cff'/%3E%3Crect x='12' y='18' width='40' height='5' rx='2.5' fill='white'/%3E%3Crect x='12' y='30' width='40' height='5' rx='2.5' fill='%23ff4d4d'/%3E%3Crect x='12' y='42' width='28' height='5' rx='2.5' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0d0f14;--panel:#161a22;--panel2:#1d222c;--line:#2a313e;--text:#e9edf3;--muted:#9aa4b2;
+  --brand:#7c5cff;--brand2:#9b83ff;--red:#ff3b3b;--ok:#33d17a;--warn:#f5c211;
+  --radius:12px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--brand2)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:.55em 1em;min-height:40px;touch-action:manipulation}
+button:hover{border-color:#3a4354}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+button.primary:hover{background:var(--brand2)}
+button.rec{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+button.ghost{background:transparent}
+button:disabled{opacity:.45;cursor:not-allowed}
+.pro-tag{display:inline-block;font-size:.68em;font-weight:700;letter-spacing:.04em;background:linear-gradient(90deg,#7c5cff,#c15cff);color:#fff;border-radius:6px;padding:.1em .45em;vertical-align:middle}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+[hidden]{display:none!important}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 16px;background:rgba(13,15,20,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1.15rem;color:var(--text);text-decoration:none}
+.logo i{width:26px;height:26px;border-radius:7px;background:var(--brand);display:grid;place-items:center}
+.logo i:before{content:"";width:14px;height:3px;background:var(--red);box-shadow:0 -6px 0 #fff,0 6px 0 #fff;border-radius:2px}
+.top nav{display:flex;gap:4px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.top nav a{color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}
+.top nav a:hover{color:var(--text);background:var(--panel)}
+#tierBtn{min-height:34px;padding:.3em .8em}
+
+/* landing */
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:36px;align-items:center;padding:56px 0 32px}
+.hero h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.08;margin:0 0 16px;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--brand2)}
+.hero p.lead{font-size:1.15rem;color:var(--muted);margin:0 0 24px}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.cta a{text-decoration:none}
+.cta button{font-size:1.05rem;padding:.75em 1.3em}
+.demo{background:#000;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.demo .pt{height:330px}
+.demo-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;background:var(--panel);border-top:1px solid var(--line)}
+.demo-ctl label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+.demo-ctl input[type=range]{width:90px}
+section.block{padding:48px 0;border-top:1px solid var(--line)}
+section.block h2{font-size:1.8rem;margin:0 0 8px;letter-spacing:-.01em}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h3{margin:0 0 6px;font-size:1.1rem}
+.card p{margin:0;color:var(--muted)}
+.honest{background:#1a1810;border:1px solid #4a4220;border-radius:var(--radius);padding:16px 20px;margin-top:20px}
+.honest h3{margin:0 0 6px;color:var(--warn)}
+.honest ul{margin:0;padding-left:20px;color:#d9d3bd}
+.prices{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.price{display:flex;flex-direction:column;gap:10px}
+.price.best{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.price .amt{font-size:2.3rem;font-weight:800}
+.price .amt small{font-size:1rem;color:var(--muted);font-weight:500}
+.price ul{margin:0;padding-left:18px;color:var(--muted);flex:1}
+.price li.no{color:#6b7380;text-decoration:line-through}
+.compare{margin-top:16px;color:var(--muted);font-size:.9rem}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-top:10px}
+details summary{cursor:pointer;font-weight:600}
+details p{color:var(--muted);margin:.6em 0 0}
+footer{padding:32px 16px 48px;text-align:center;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line)}
+
+/* app */
+.app{display:grid;grid-template-columns:250px 1fr 290px;gap:16px;padding:16px;max-width:1400px;margin:0 auto;min-height:calc(100vh - 60px)}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.pane h2{font-size:1rem;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pane-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#scriptList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+#scriptList li{display:flex;align-items:center;gap:4px;border:1px solid transparent;border-radius:10px;padding:4px 4px 4px 10px;background:var(--panel2)}
+#scriptList li.on{border-color:var(--brand)}
+#scriptList li .t{flex:1;min-width:0;cursor:pointer;padding:6px 0}
+#scriptList li .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+#scriptList li .t span{font-size:.78rem;color:var(--muted)}
+#scriptList li button{min-height:34px;padding:.2em .55em;background:transparent;border-color:transparent;color:var(--muted)}
+#scriptList li button:hover{color:var(--text);border-color:var(--line)}
+.editor{display:flex;flex-direction:column;gap:10px}
+#title{font-size:1.25rem;font-weight:700;background:transparent;border:1px solid transparent;border-radius:8px;padding:6px 8px}
+#title:hover,#title:focus{border-color:var(--line);outline:none;background:var(--panel2)}
+#body{flex:1;min-height:340px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:1.05rem;line-height:1.6}
+#body:focus{outline:none;border-color:var(--brand)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:.875rem}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{flex:1;min-width:160px;font-size:1.05rem;padding:.8em 1em}
+.set{display:flex;flex-direction:column;gap:16px}
+.set label.row{display:flex;flex-direction:column;gap:6px;font-size:.9rem}
+.set label.row span{display:flex;justify-content:space-between}
+.set input[type=range]{width:100%;accent-color:var(--brand)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;background:transparent;min-height:40px;font-size:.9rem}
+.seg button.on{background:var(--brand);color:#fff}
+.check{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+.note{font-size:.82rem;color:var(--muted);background:var(--panel2);border-radius:8px;padding:8px 10px}
+.note.warn{color:#e8d9a0;background:#2a2510}
+.note.ok{color:#bfe9cf;background:#122a1c}
+select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px}
+
+/* prompter component */
+.pt{position:relative;overflow:hidden;background:#000;color:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.pt-view{position:absolute;inset:0;overflow:hidden;cursor:pointer}
+.pt-mirror{position:absolute;inset:0}
+.pt.mirrored .pt-mirror{transform:scaleX(-1)}
+.pt-text{position:relative;margin:0 auto;max-width:1200px;padding:0 6%;font-weight:600;line-height:1.35;will-change:transform;word-wrap:break-word;overflow-wrap:break-word}
+.pt-text p{margin:0 0 .7em}
+.pt-text .w{border-radius:.12em;transition:color .15s}
+.pt-text .w.said{color:#7b8494}
+.pt-text .w.cur{color:#ffe14d;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.15em}
+.pt-guide{position:absolute;left:0;right:0;top:40%;height:0;border-top:3px solid var(--red);pointer-events:none;box-shadow:0 0 12px rgba(255,59,59,.6)}
+.pt-guide:before,.pt-guide:after{content:"";position:absolute;top:-9px;border:8px solid transparent}
+.pt-guide:before{left:0;border-left:12px solid var(--red)}
+.pt-guide:after{right:0;border-right:12px solid var(--red)}
+.pt-progress{position:absolute;left:0;right:0;top:0;height:5px;background:rgba(255,255,255,.12);z-index:3}
+.pt-progress i{display:block;height:100%;width:0;background:var(--brand2)}
+.pt-count{position:absolute;inset:0;display:grid;place-items:center;font-size:min(40vw,220px);font-weight:800;color:#fff;background:rgba(0,0,0,.55);z-index:4;pointer-events:none}
+.pt-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:rgba(0,0,0,.78);z-index:4;padding:20px}
+.pt-msg h3{font-size:clamp(1.4rem,5vw,2.4rem);margin:0}
+.pt-msg .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.pt-badge{position:absolute;top:12px;right:12px;z-index:3;font-size:.8rem;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px 10px;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.pt-badge.live:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px;animation:pulse 1.2s infinite}
+.pt-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:.85rem;color:rgba(255,255,255,.8);background:rgba(0,0,0,.7);border-radius:999px;padding:2px 12px;z-index:3;pointer-events:none}
+.pt-hint:empty{display:none}
+@keyframes pulse{50%{opacity:.3}}
+
+/* full-screen layers */
+.layer{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column}
+.layer .pt-full{flex:1}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;padding:8px 8px calc(8px + var(--safe-b));background:#111;border-top:1px solid #222}
+.bar button{min-height:44px;min-width:44px;padding:.4em .7em;background:#1c1c1c;border-color:#333;color:#fff}
+.bar button.on{background:var(--brand);border-color:var(--brand)}
+.bar .grp{display:flex;align-items:center;gap:4px;background:#181818;border-radius:10px;padding:2px 6px}
+.bar .val{min-width:58px;text-align:center;font-size:.85rem;color:#ccc;font-variant-numeric:tabular-nums}
+.bar .sep{flex-basis:100%;height:0}
+#wakeState{font-size:.75rem;color:#888;width:100%;text-align:center}
+
+/* record layer */
+#layer-record{background:#000}
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+#cam.mirror{transform:scaleX(-1)}
+.rec-script{position:absolute;left:0;right:0;top:0;height:38%;z-index:2}
+.rec-script .pt{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.rec-script .pt-text{line-height:1.3}
+.rec-wm{position:absolute;right:12px;bottom:calc(150px + var(--safe-b));z-index:2;background:rgba(0,0,0,.5);color:#fff;font-weight:700;font-size:.85rem;border-radius:8px;padding:4px 10px;pointer-events:none}
+.rec-top{position:absolute;left:0;right:0;top:38%;z-index:2;display:flex;justify-content:center;padding:8px;pointer-events:none}
+.rec-timer{background:rgba(0,0,0,.6);border-radius:999px;padding:4px 12px;font-variant-numeric:tabular-nums;font-weight:700}
+.rec-timer.on:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);margin-right:8px;animation:pulse 1s infinite}
+#layer-record .bar{position:absolute;left:0;right:0;bottom:0;z-index:3;background:rgba(0,0,0,.7);border:0}
+#recBtn{min-width:120px;font-weight:700}
+#recBtn.stop{background:#fff;color:#000}
+.cam-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;z-index:1;color:#ccc}
+.take{position:absolute;inset:0;z-index:5;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px calc(16px) calc(16px + var(--safe-b))}
+.take h3{margin:0;font-size:1.5rem}
+.take video{max-width:100%;max-height:60vh;border-radius:12px;background:#111}
+.take .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.take a.dl{display:inline-flex;align-items:center;justify-content:center;background:var(--ok);color:#03210f;font-weight:700;text-decoration:none;border-radius:10px;padding:.6em 1.2em;min-height:44px}
+
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--text);padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 24px)}
+dialog::backdrop{background:rgba(0,0,0,.65)}
+.dlg{padding:22px;display:flex;flex-direction:column;gap:12px}
+.dlg h3{margin:0;font-size:1.3rem}
+.dlg p{margin:0;color:var(--muted)}
+.dlg .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.dlg input[type=text],.dlg textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+.dlg textarea{min-height:90px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;word-break:break-all}
+.dlg .plans{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dlg .plans button{display:flex;flex-direction:column;align-items:center;padding:12px;min-height:80px}
+.dlg .plans b{font-size:1.5rem}
+.toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);z-index:100;background:#222;border:1px solid #444;border-radius:10px;padding:10px 16px;max-width:calc(100vw - 32px);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+
+@media (max-width:980px){
+  .app{grid-template-columns:1fr;padding:12px}
+  .hero{grid-template-columns:1fr;padding-top:32px}
+  .grid3,.prices{grid-template-columns:1fr}
+  #body{min-height:240px}
+}
+@media (max-width:560px){
+  .top nav a.hide-s{display:none}
+  .bar .val{min-width:44px}
+  .dlg .plans{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="logo" href="#/"><i></i>CueCast</a>
+  <nav>
+    <a href="#/" data-scroll="features" class="hide-s">Features</a>
+    <a href="#/" data-scroll="pricing">Pricing</a>
+    <a href="#/app">Open app</a>
+    <button id="tierBtn" class="primary">Go Pro</button>
+  </nav>
+</header>
+
+<!-- ============ LANDING ============ -->
+<main id="view-landing" hidden>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>The teleprompter that <em>follows your voice.</em></h1>
+        <p class="lead">Read naturally to camera for TikTok, Reels, YouTube and Zoom. Voice-follow scrolling, speed set in true words per minute, and recording right in your browser. No app, no account.</p>
+        <div class="cta">
+          <a href="#/app"><button class="primary">Open the teleprompter — free</button></a>
+          <a href="#/" data-scroll="pricing"><button>Pro: $6/mo or $39 once</button></a>
+        </div>
+        <p class="small muted" style="margin-top:14px">Your scripts stay on your device. Nothing to install.</p>
+      </div>
+      <div class="demo">
+        <div id="demoHost"></div>
+        <div class="demo-ctl">
+          <button id="demoPlay" class="primary">▶ Try it</button>
+          <button id="demoRestart" title="Restart">⟲</button>
+          <label>Speed <input id="demoWpm" type="range" min="60" max="220" step="5" value="130"><b id="demoWpmV">130</b> wpm</label>
+          <label>Size <input id="demoFont" type="range" min="24" max="80" step="2" value="34"></label>
+          <label><input id="demoMirror" type="checkbox"> Mirror</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="block" id="features">
+    <div class="wrap">
+      <h2>Everything you need to read to camera</h2>
+      <p class="muted">Built for creators who want to look at the lens, not at a script.</p>
+      <div class="grid3">
+        <div class="card"><h3>🎤 Voice-follow scrolling <span class="pro-tag">PRO</span></h3><p>The script moves as you speak, word by word. Pause to think and it waits for you. It only ever moves forward, one word at a time.</p></div>
+        <div class="card"><h3>⏱ True words per minute</h3><p>Set 60–220 WPM and that's what you get. Make the text bigger or smaller mid-read — the pace never changes.</p></div>
+        <div class="card"><h3>🎬 Record in the browser</h3><p>Front or back camera with the script right under the lens. Watch your take, then download it.</p></div>
+        <div class="card"><h3>🔤 Big, adjustable text</h3><p>24 to 160px, changeable while scrolling. A red reading line at 40% keeps your eyes in one place.</p></div>
+        <div class="card"><h3>🪞 Mirror mode</h3><p>Horizontal flip for teleprompter glass rigs and beam-splitter setups.</p></div>
+        <div class="card"><h3>📱 Phone friendly</h3><p>Tap to pause, keeps the screen awake while you read, works from your phone's browser.</p></div>
+      </div>
+      <div class="honest">
+        <h3>Honest browser notes</h3>
+        <ul>
+          <li><b>Voice-follow works best in Chrome</b> (desktop and Android). Chrome sends your audio to Google's speech service to turn it into text, so it needs an internet connection.</li>
+          <li><b>Safari's speech recognition is limited</b> (Mac, iPhone, iPad — and every iPhone browser, since they all use Safari's engine). It can stop listening or lag. Use fixed-speed scrolling if it struggles.</li>
+          <li><b>Firefox has no speech recognition.</b> CueCast tells you and scrolls at a fixed speed instead.</li>
+          <li>Keeping the screen awake needs a recent browser (iOS 16.4+, Chrome 84+). CueCast shows whether it worked.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="pricing">
+    <div class="wrap">
+      <h2>Simple pricing</h2>
+      <p class="muted">No accounts. Pay once with Stripe, get a license key, paste it in. Done.</p>
+      <div class="prices">
+        <div class="card price">
+          <h3>Free</h3>
+          <div class="amt">$0</div>
+          <ul>
+            <li>Fixed-speed scrolling (60–220 WPM)</li>
+            <li>1 saved script</li>
+            <li>Recording with a watermark</li>
+            <li class="no">Voice-follow scrolling</li>
+          </ul>
+          <a href="#/app"><button style="width:100%">Start free</button></a>
+        </div>
+        <div class="card price">
+          <h3>Pro monthly</h3>
+          <div class="amt">$6<small>/month</small></div>
+          <ul>
+            <li>Voice-follow scrolling</li>
+            <li>Unlimited scripts</li>
+            <li>Clean recordings, no watermark</li>
+            <li>Cancel anytime</li>
+          </ul>
+          <button class="primary" data-buy="monthly">Get Pro monthly</button>
+        </div>
+        <div class="card price best">
+          <h3>Pro lifetime <span class="pro-tag">BEST VALUE</span></h3>
+          <div class="amt">$39<small> once</small></div>
+          <ul>
+            <li>Everything in Pro</li>
+            <li>Pay once, keep it forever</li>
+            <li>Less than 2 months of Teleprompter.com</li>
+          </ul>
+          <button class="primary" data-buy="lifetime">Get lifetime</button>
+        </div>
+      </div>
+      <p class="compare">For comparison: Teleprompter.com Pro is listed at $19.99/month and BIGVU at $25/month (list prices when this page was written).</p>
+      <p class="small"><a href="#" data-license>Already bought? Enter your license key</a></p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <details><summary>Where are my scripts stored?</summary><p>In your browser's local storage, on this device only. There's no cloud sync in this version — if you clear site data or switch devices, the scripts don't come with you. Copy anything important somewhere safe.</p></details>
+      <details><summary>Are my recordings uploaded anywhere?</summary><p>No. Recording happens entirely in your browser and the file is saved straight to your device when you press Download.</p></details>
+      <details><summary>How does voice-follow work?</summary><p>Your browser's speech recognition turns what you say into words. CueCast matches them against the very next words of your script and moves forward only when they match. If it ever loses you, tap the word you're on to re-sync.</p></details>
+      <details><summary>How does the license key work?</summary><p>After you pay through Stripe you receive a license key (or a one-click activation link). Paste it into CueCast and Pro unlocks on that browser. Keys are cryptographically signed, so made-up keys don't work.</p></details>
+      <details><summary>Does "120 WPM" really mean 120 words per minute?</summary><p>Yes. Speed is measured in words of your script, not pixels, so a 120-word script at 120 WPM takes one minute whatever the text size.</p></details>
+    </div>
+  </section>
+  <footer>CueCast — a browser teleprompter. Works offline once loaded (voice-follow in Chrome needs internet).</footer>
+</main>
+
+<!-- ============ APP ============ -->
+<main id="view-app" class="app" hidden>
+  <aside class="pane">
+    <div class="pane-head"><h2>Scripts</h2><button id="newScript" class="primary" style="min-height:34px;padding:.2em .8em">+ New</button></div>
+    <ul id="scriptList"></ul>
+    <p id="tierNote" class="note" style="margin-top:12px"></p>
+  </aside>
+
+  <section class="pane editor">
+    <input id="title" aria-label="Script title" maxlength="120" placeholder="Untitled script">
+    <textarea id="body" aria-label="Script text" placeholder="Paste or type your script here…"></textarea>
+    <div class="meta"><span id="wordCount">0 words</span><span id="estTime"></span><span id="saveState"></span></div>
+    <div class="actions">
+      <button id="goPrompt" class="primary">▶ Start prompter</button>
+      <button id="goRecord" class="rec">● Record video</button>
+    </div>
+  </section>
+
+  <aside class="pane set">
+    <h2>Settings</h2>
+    <div>
+      <div style="font-size:.9rem;margin-bottom:6px">Scrolling</div>
+      <div class="seg" id="modeSeg">
+        <button data-mode="fixed">Fixed speed</button>
+        <button data-mode="voice">Voice-follow <span class="pro-tag">PRO</span></button>
+      </div>
+      <p id="voiceSupport" class="note" style="margin:8px 0 0"></p>
+    </div>
+    <label class="row"><span>Speed <b id="wpmV"></b></span><input id="wpm" type="range" min="60" max="220" step="5"></label>
+    <label class="row"><span>Text size <b id="fontV"></b></span><input id="font" type="range" min="24" max="160" step="2"></label>
+    <label class="row"><span>Text size while recording <b id="recFontV"></b></span><input id="recFont" type="range" min="24" max="160" step="2"></label>
+    <label class="check"><input id="mirror" type="checkbox"> Mirror text (glass rigs)</label>
+    <label class="row"><span>Voice language</span>
+      <select id="lang">
+        <option value="">Browser default</option>
+        <option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="en-AU">English (Australia)</option><option value="en-IN">English (India)</option>
+        <option value="es-ES">Español (España)</option><option value="es-MX">Español (México)</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option>
+        <option value="it-IT">Italiano</option><option value="pt-BR">Português (Brasil)</option><option value="pt-PT">Português (Portugal)</option><option value="nl-NL">Nederlands</option>
+        <option value="pl-PL">Polski</option><option value="hr-HR">Hrvatski</option><option value="sr-RS">Srpski</option><option value="sv-SE">Svenska</option>
+        <option value="tr-TR">Türkçe</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="hi-IN">हिन्दी</option>
+      </select>
+    </label>
+    <p class="note small">Shortcuts in the prompter: <b>Space</b> pause/resume · <b>↑/↓</b> speed · <b>+/−</b> size · <b>R</b> restart · <b>M</b> mirror · <b>Esc</b> exit.</p>
+    <p class="small"><a href="#" data-license>License key…</a></p>
+  </aside>
+</main>
+
+<!-- ============ PROMPTER (full screen) ============ -->
+<div id="layer-prompt" class="layer" hidden>
+  <div id="promptHost" class="pt-full"></div>
+  <div class="bar" id="promptBar">
+    <button data-act="exit" title="Exit (Esc)">✕</button>
+    <button data-act="restart" title="Restart (R)">⟲</button>
+    <button data-act="play" class="on" title="Pause / resume (Space)" style="min-width:64px">▶</button>
+    <div class="grp" data-fixed><button data-act="slower" title="Slower">−</button><span class="val" data-v="wpm"></span><button data-act="faster" title="Faster">+</button></div>
+    <button data-act="nextline" data-voice title="Jump to next line">↓ line</button>
+    <div class="grp"><button data-act="smaller" title="Smaller text">A−</button><span class="val" data-v="font"></span><button data-act="bigger" title="Bigger text">A+</button></div>
+    <button data-act="mirror" title="Mirror (M)">⇋</button>
+    <button data-act="voice" title="Voice-follow">🎤</button>
+    <button data-act="fs" title="Full screen">⛶</button>
+    <div id="wakeState"></div>
+  </div>
+</div>
+
+<!-- ============ RECORD ============ -->
+<div id="layer-record" class="layer" hidden>
+  <video id="cam" playsinline muted autoplay></video>
+  <div class="cam-msg" id="camMsg">Starting camera…</div>
+  <div class="rec-script"><div id="recHost"></div></div>
+  <div class="rec-top"><div class="rec-timer" id="recTimer">00:00</div></div>
+  <div class="rec-wm" id="recWm">Free plan: recordings are watermarked</div>
+  <div class="bar" id="recBar">
+    <button data-act="close" title="Close">✕</button>
+    <button data-act="flip" title="Switch camera">⟲ Flip</button>
+    <div class="grp" data-fixed><button data-act="slower">−</button><span class="val" data-v="wpm"></span><button data-act="faster">+</button></div>
+    <div class="grp"><button data-act="smaller">A−</button><span class="val" data-v="font"></span><button data-act="bigger">A+</button></div>
+    <button data-act="voice" title="Voice-follow">🎤</button>
+    <button id="recBtn" class="rec" data-act="rec">● Record</button>
+  </div>
+  <div class="take" id="take" hidden>
+    <h3>Your take</h3>
+    <video id="takeVideo" controls playsinline></video>
+    <div class="small muted" id="takeInfo"></div>
+    <div class="btns">
+      <a class="dl" id="takeDl" download>⬇ Download video</a>
+      <button id="takeAgain">● Record again</button>
+      <button id="takeDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+
+<script>
+'use strict';
+/* =====================================================================
+   CONFIG — edit these before going live
+   ===================================================================== */
+const CONFIG = {
+  // Paste your Stripe Payment Link URLs here (https://buy.stripe.com/...).
+  // While empty, Buy buttons explain that payments are not switched on yet.
+  stripeMonthly: '',
+  stripeLifetime: '',
+  // Where buyers can reach you if their key does not arrive.
+  supportEmail: ''
+};
+// Public half of the license signing key. Replace with: node tools/keygen.mjs init
+const LICENSE_PUBLIC_KEY = {"kty":"EC","crv":"P-256","x":"8kOitdTKWdRy_Mw4rvwPx0MIQuHM9DAqowbBQSCTPdM","y":"45IghnLP4juMjBl8a8WcerzK40lKfmGwPn5jv4AYoQ0"};
+
+/* =====================================================================
+   Small helpers
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const countWords = t => (t.trim().match(/\S+/g) || []).length;
+const fmtDur = sec => { sec = Math.round(sec); const m = Math.floor(sec / 60), s = sec % 60; return m ? `${m} min ${s} s` : `${s} s`; };
+const mmss = ms => { const s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+let toastT;
+function toast(msg, ms = 3200) {
+  let el = $('.toast'); if (!el) { el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, ms);
+}
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('cuecast.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('cuecast.' + k, JSON.stringify(v)); return true; } catch { return false; } },
+  del(k) { try { localStorage.removeItem('cuecast.' + k); } catch {} }
+};
+
+/* =====================================================================
+   Speech recognition support detection
+   ===================================================================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const UA = navigator.userAgent;
+const IS_WEBKIT_ONLY = /iPad|iPhone|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1) ||
+  (/Safari/.test(UA) && !/Chrome|Chromium|CriOS|Edg|OPR|Android|FxiOS/.test(UA));
+function voiceSupport() {
+  if (!SR) return { ok: false, level: 'none', text: 'This browser has no speech recognition, so voice-follow is not available here. CueCast will scroll at a fixed speed instead. Use Chrome for voice-follow.' };
+  if (IS_WEBKIT_ONLY) return { ok: true, level: 'limited', text: 'Safari speech recognition is limited: it may lag or stop listening. Voice-follow works best in Chrome on a computer or Android.' };
+  return { ok: true, level: 'good', text: 'Voice-follow is available. Chrome sends audio to Google\'s speech service, so you need to be online.' };
+}
+
+/* =====================================================================
+   Voice matcher — strict, forward-only script following.
+   Rules: only the exact next word advances; a skip of at most 2 words is
+   allowed only on final results and only when the following spoken word
+   confirms it; max 5 words examined per recognition result; interim
+   results never skip; position never moves backwards.
+   ===================================================================== */
+const NUMS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+function norm(w) {
+  let s = String(w).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/&/g, 'and').replace(/[^\p{L}\p{N}]+/gu, '');
+  const n = NUMS.indexOf(s); if (n >= 0) s = String(n);
+  return s;
+}
+function lev1(a, b) { // true if edit distance <= 1
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, e = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++e > 1) return false;
+    if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+  }
+  return e + (a.length - i) + (b.length - j) <= 1;
+}
+function same(spoken, script) {
+  if (!spoken || !script) return false;
+  if (spoken === script) return true;
+  return spoken.length >= 4 && script.length >= 4 && lev1(spoken, script);
+}
+class VoiceMatcher {
+  constructor(displayWords) {
+    this.units = []; this.unitWord = [];
+    displayWords.forEach((w, i) => {
+      for (const part of w.split(/[-–—/]+/)) { const n = norm(part); if (n) { this.units.push(n); this.unitWord.push(i); } }
+    });
+    this.N = displayWords.length; this.pos = 0; this.pending = null;
+  }
+  get word() { return this.pos >= this.units.length ? this.N : this.unitWord[this.pos]; }
+  setWord(i) {
+    const u = this.unitWord.findIndex(w => w >= i);
+    this.pos = u < 0 ? this.units.length : u; this.pending = null;
+  }
+  // spoken: array of normalized words (caller limits to 5). Returns index of last word that advanced, or -1.
+  feed(spoken, final) {
+    let last = -1;
+    for (let k = 0; k < spoken.length && k < 5; k++) {
+      const s = spoken[k];
+      if (this.pending && final) {
+        const p = this.pending; this.pending = null;
+        if (p.from === this.pos && same(s, this.units[p.confirm])) { this.pos = p.confirm + 1; last = k; continue; }
+      }
+      if (this.pos < this.units.length && same(s, this.units[this.pos])) {
+        this.pos++; last = k;
+        if (this.pending && this.pending.from !== this.pos) this.pending = null;
+        continue;
+      }
+      if (final) {
+        for (let j = 1; j <= 2; j++) {
+          const idx = this.pos + j;
+          if (idx + 1 < this.units.length && same(s, this.units[idx])) { this.pending = { from: this.pos, confirm: idx + 1 }; break; }
+        }
+      }
+    }
+    return last;
+  }
+}
+
+/* Feeds recognition events into a VoiceMatcher. */
+class VoiceFollow {
+  constructor(words, { lang, onWord, onStatus }) {
+    this.m = new VoiceMatcher(words); this.lang = lang; this.onWord = onWord; this.onStatus = onStatus;
+    this.active = false; this.rec = null; this.consumed = {}; this.fatal = false;
+  }
+  start() {
+    if (!SR) { this.onStatus('error', 'No speech recognition in this browser.'); return; }
+    if (this.active) return;
+    this.active = true; this.fatal = false; this._open();
+  }
+  _open() {
+    const r = new SR();
+    r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
+    if (this.lang) r.lang = this.lang; else r.lang = navigator.language || 'en-US';
+    this.consumed = {};
+    r.onstart = () => this.onStatus('live', 'Listening…');
+    r.onresult = e => this.handle(e);
+    r.onerror = e => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      const msg = {
+        'not-allowed': 'Microphone blocked. Allow mic access in the address bar, or use fixed speed.',
+        'service-not-allowed': 'Speech recognition is turned off in this browser. Use fixed speed or try Chrome.',
+        'network': 'Voice-follow needs an internet connection in this browser.',
+        'audio-capture': 'No microphone found, or another app is using it.',
+        'language-not-supported': 'This language is not supported for voice-follow here.'
+      }[e.error] || ('Speech recognition error: ' + e.error);
+      if (e.error !== 'network') this.fatal = true;
+      this.onStatus('error', msg);
+    };
+    r.onend = () => {
+      if (this.rec !== r) return;
+      if (this.active && !this.fatal) setTimeout(() => { if (this.active && this.rec === r) this._open(); }, 250);
+      else { this.active = false; if (!this.fatal) this.onStatus('idle', 'Voice paused'); }
+    };
+    this.rec = r;
+    try { r.start(); } catch (err) { this.onStatus('error', 'Could not start speech recognition: ' + err.message); }
+  }
+  stop() {
+    const was = this.active;
+    this.active = false;
+    const r = this.rec; this.rec = null;
+    if (r) { try { r.abort(); } catch {} }
+    if (was && !this.fatal) this.onStatus('idle', 'Voice paused');
+  }
+  // Exposed for testing: process one result (transcript, isFinal, resultIndex).
+  result(index, transcript, final) {
+    const words = transcript.split(/\s+/).map(norm).filter(Boolean);
+    const from = this.consumed[index] || 0;
+    // the last word of an interim result is still changing — ignore it
+    const stableEnd = final ? words.length : words.length - 1;
+    let start = from;
+    if (!final) start = Math.max(from, stableEnd - 5); // interim: newest 5 stable words
+    const batch = words.slice(start, Math.min(stableEnd, start + 5));
+    if (!batch.length) return;
+    const before = this.m.pos;
+    const last = this.m.feed(batch, final);
+    if (final) this.consumed[index] = start + batch.length;
+    else if (last >= 0) this.consumed[index] = start + last + 1;
+    if (this.m.pos !== before) this.onWord(this.m.word);
+  }
+  handle(e) {
+    let heard = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i];
+      this.result(i, res[0].transcript, res.isFinal);
+      heard = res[0].transcript;
+    }
+    if (heard) this.onStatus('live', '“' + heard.trim().split(/\s+/).slice(-6).join(' ') + '”');
+  }
+}
+
+/* =====================================================================
+   Prompter — scroll position is measured in WORDS, not pixels.
+   p = number of words already passed. In fixed mode p grows by
+   wpm/60000 words per millisecond. The pixel offset is derived from p by
+   interpolating between line positions, so text size never affects
+   reading time.
+   ===================================================================== */
+const GUIDE = 0.4;
+class Prompter {
+  constructor(host, opts = {}) {
+    this.o = opts; this.host = host;
+    host.classList.add('pt');
+    host.innerHTML = `<div class="pt-progress"><i></i></div>
+      <div class="pt-view"><div class="pt-mirror"><div class="pt-text"></div></div><div class="pt-guide"></div></div>
+      <div class="pt-badge" hidden></div>
+      <div class="pt-count" hidden></div>
+      <div class="pt-msg pt-end" hidden><h3>🎬 End of script</h3><p class="muted">Nice take.</p><div class="btns"><button class="primary" data-pt="restart">⟲ Restart</button>${opts.exitable ? '<button data-pt="exit">Close</button>' : ''}</div></div>
+      <div class="pt-hint"></div>`;
+    this.view = $('.pt-view', host); this.textEl = $('.pt-text', host); this.bar = $('.pt-progress i', host);
+    this.countEl = $('.pt-count', host); this.endEl = $('.pt-end', host); this.badge = $('.pt-badge', host); this.hint = $('.pt-hint', host);
+    this.words = []; this.spans = []; this.lines = []; this.N = 0;
+    this.p = 0; this.wpm = 140; this.font = 56; this.state = 'idle'; this.mode = 'fixed'; this.lang = '';
+    this.voice = null; this.voiceWord = 0; this.marked = 0; this.cur = -1;
+    this.view.addEventListener('click', e => this.onTap(e));
+    this.endEl.addEventListener('click', e => {
+      const a = e.target.closest('[data-pt]'); if (!a) return;
+      e.stopPropagation();
+      if (a.dataset.pt === 'restart') this.start(); else this.o.onExit?.();
+    });
+    if (window.ResizeObserver) new ResizeObserver(() => this.layout()).observe(this.view);
+    this._loop = this._loop.bind(this);
+  }
+  load(text) {
+    this.stopVoice(); this.clearCountdown();
+    const paras = String(text).replace(/\r/g, '').trim().split(/\n\s*\n/);
+    const words = []; let html = '';
+    for (const para of paras) {
+      const lines = para.split('\n').map(l => l.trim().split(/\s+/).filter(Boolean)).filter(l => l.length);
+      if (!lines.length) continue;
+      html += '<p>' + lines.map(l => l.map(w => `<span class="w" data-i="${words.push(w) - 1}">${esc(w)}</span>`).join(' ')).join('<br>') + '</p>';
+    }
+    this.textEl.innerHTML = html;
+    this.words = words; this.N = words.length; this.spans = $$('.w', this.textEl);
+    this.p = 0; this.voiceWord = 0; this.marked = 0; this.cur = -1;
+    this.setState('idle'); this.layout();
+  }
+  setFont(px) { this.font = clamp(Math.round(px), 24, 160); this.textEl.style.fontSize = this.font + 'px'; this.layout(); }
+  setWpm(w) { this.wpm = clamp(Math.round(w), 60, 220); }
+  setMirror(b) { this.host.classList.toggle('mirrored', !!b); }
+  setMode(mode, lang) {
+    if (mode === 'voice' && !SR) mode = 'fixed';
+    const wasRunning = this.state === 'running';
+    this.stopVoice();
+    this.mode = mode; this.lang = lang || '';
+    if (mode === 'voice') {
+      this.voice = this.makeVoice();
+      this.voice.m.setWord(Math.ceil(this.p - 1e-6)); this.voiceWord = this.voice.m.word;
+      if (wasRunning) this.voice.start();
+    } else { this.unmarkFrom(0); this.badge.hidden = true; }
+    this.updateHint();
+  }
+  makeVoice() {
+    return new VoiceFollow(this.words, {
+      lang: this.lang,
+      onWord: w => { if (w > this.voiceWord) { this.voiceWord = w; this.markTo(w); } },
+      onStatus: (kind, text) => {
+        this.badge.hidden = false; this.badge.textContent = text; this.badge.classList.toggle('live', kind === 'live');
+        this.o.onVoiceStatus?.(kind, text);
+      }
+    });
+  }
+  stopVoice() { if (this.voice) { this.voice.stop(); } }
+  // --- highlighting (voice mode)
+  markTo(w) {
+    for (let i = this.marked; i < w && i < this.N; i++) { this.spans[i].classList.add('said'); this.spans[i].classList.remove('cur'); }
+    this.marked = Math.max(this.marked, w);
+    if (this.cur >= 0 && this.spans[this.cur]) this.spans[this.cur].classList.remove('cur');
+    this.cur = w < this.N ? w : -1;
+    if (this.cur >= 0) this.spans[this.cur].classList.add('cur');
+  }
+  unmarkFrom(w) {
+    for (let i = w; i < this.N; i++) this.spans[i].classList.remove('said', 'cur');
+    this.marked = Math.min(this.marked, w); this.cur = -1;
+  }
+  // --- geometry
+  layout() {
+    const L = []; let lastTop = -1e9, h = 0;
+    for (let i = 0; i < this.spans.length; i++) {
+      const s = this.spans[i], top = s.offsetTop;
+      // y = bottom of the line box, so the line being read sits just above the red guide
+      if (Math.abs(top - lastTop) > 2) { h = s.offsetHeight; L.push({ start: i, y: top + h }); lastTop = top; }
+    }
+    if (L.length) L.push({ start: this.N, y: L[L.length - 1].y + h * 1.0 });
+    this.lines = L; this.render();
+  }
+  yAt(p) {
+    const L = this.lines; if (!L.length) return 0;
+    if (p <= 0) return L[0].y;
+    if (p >= this.N) return L[L.length - 1].y;
+    let lo = 0, hi = L.length - 2;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (L[mid].start <= p) lo = mid; else hi = mid - 1; }
+    const a = L[lo], b = L[lo + 1];
+    return a.y + (p - a.start) / (b.start - a.start) * (b.y - a.y);
+  }
+  render() {
+    const g = this.view.clientHeight * GUIDE;
+    this.textEl.style.transform = `translate3d(0,${(g - this.yAt(this.p)).toFixed(2)}px,0)`;
+    this.bar.style.width = (this.N ? this.p / this.N * 100 : 0).toFixed(2) + '%';
+  }
+  // --- state machine: idle → countdown → running ⇄ paused → ended
+  setState(s) {
+    this.state = s;
+    this.endEl.hidden = s !== 'ended';
+    if (s !== 'countdown') this.countEl.hidden = true;
+    this.updateHint();
+    this.o.onState?.(s);
+  }
+  updateHint() {
+    const s = this.state, v = this.mode === 'voice';
+    this.hint.textContent = s === 'idle' ? 'Tap to start' : s === 'paused' ? 'Paused — tap to resume' :
+      (s === 'running' && v) ? 'Tap a word to re-sync' : '';
+  }
+  start(onGo) {
+    this.clearCountdown(); this.stopVoice();
+    this.p = 0; this.voiceWord = 0; this.unmarkFrom(0); this.marked = 0;
+    if (this.mode === 'voice') { this.voice = this.makeVoice(); this.markTo(0); }
+    this.render();
+    this.setState('countdown');
+    let n = 3; this.countEl.hidden = false; this.countEl.textContent = n;
+    const step = () => {
+      n--;
+      if (n > 0) { this.countEl.textContent = n; this.cdT = setTimeout(step, 1000); }
+      else { this.cdT = null; this.go(); onGo?.(); }
+    };
+    this.cdT = setTimeout(step, 1000);
+  }
+  clearCountdown() { if (this.cdT) { clearTimeout(this.cdT); this.cdT = null; } this.countEl.hidden = true; }
+  go() {
+    this.setState('running'); this.last = performance.now();
+    if (this.mode === 'voice' && this.voice) this.voice.start();
+    if (!this.N) this.end();
+  }
+  pause() {
+    if (this.state === 'countdown') { this.clearCountdown(); this.setState('idle'); return; }
+    if (this.state !== 'running') return;
+    this.stopVoice(); this.setState('paused');
+  }
+  resume() {
+    if (this.state !== 'paused') return;
+    this.last = performance.now(); this.setState('running');
+    if (this.mode === 'voice' && this.voice) this.voice.start();
+  }
+  toggle() {
+    ({ idle: () => this.start(), countdown: () => this.pause(), running: () => this.pause(), paused: () => this.resume(), ended: () => this.start() })[this.state]();
+  }
+  end() { this.p = this.N; this.render(); this.stopVoice(); this.badge.hidden = true; this.setState('ended'); this.o.onEnd?.(); }
+  reset() { this.clearCountdown(); this.stopVoice(); this.p = 0; this.unmarkFrom(0); this.badge.hidden = true; this.setState('idle'); this.render(); }
+  nextLine() {
+    if (this.mode !== 'voice' || !this.voice) return;
+    const L = this.lines, w = this.voiceWord;
+    const nx = L.find(l => l.start > w); if (!nx) return;
+    this.resync(nx.start);
+  }
+  resync(i) { // explicit user action: tap a word
+    this.voice.m.setWord(i); this.voiceWord = this.voice.m.word;
+    if (i < this.marked) this.unmarkFrom(i);
+    this.markTo(this.voiceWord); this.p = Math.min(this.p, this.voiceWord);
+    if (i < this.p) this.p = i;
+    this.render();
+  }
+  onTap(e) {
+    const sp = e.target.closest('.w');
+    if (sp && this.mode === 'voice' && this.voice && (this.state === 'running' || this.state === 'paused')) {
+      this.resync(+sp.dataset.i); return;
+    }
+    if (this.o.onTap) { this.o.onTap(); return; }
+    this.toggle();
+  }
+  activate() { if (this.active) return; this.active = true; this.last = performance.now(); requestAnimationFrame(this._loop); this.layout(); }
+  deactivate() { this.active = false; this.reset(); }
+  _loop(now) {
+    if (!this.active) return;
+    const dt = Math.min(1000, Math.max(0, now - this.last)); this.last = now;
+    if (this.state === 'running') {
+      if (this.mode === 'fixed') this.p += dt * this.wpm / 60000;
+      else {
+        const t = this.voiceWord;
+        if (t > this.p) { this.p += (t - this.p) * (1 - Math.exp(-dt / 220)); if (t - this.p < 0.002) this.p = t; }
+      }
+      if (this.p >= this.N) this.end(); else this.render();
+    }
+    requestAnimationFrame(this._loop);
+  }
+}
+
+/* =====================================================================
+   License keys — ECDSA P-256 signatures, verified with the public key.
+   Format: CC-<plan L|M>-<expiry YYYYMMDD|00000000>-<id>-<signature base32>
+   ===================================================================== */
+const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function b32decode(s) {
+  const out = []; let bits = 0, val = 0;
+  for (const ch of s) {
+    const v = B32.indexOf(ch); if (v < 0) return null;
+    val = (val << 5) | v; bits += 5;
+    if (bits >= 8) { out.push((val >>> (bits - 8)) & 255); bits -= 8; }
+  }
+  return new Uint8Array(out);
+}
+async function verifyLicense(raw) {
+  const parts = String(raw || '').toUpperCase().replace(/\s+/g, '').split('-');
+  if (parts.length < 5 || parts[0] !== 'CC') return { ok: false, reason: 'That does not look like a CueCast key. Keys start with CC-.' };
+  const [, plan, exp, id, ...rest] = parts;
+  if (!/^[LM]$/.test(plan) || !/^\d{8}$/.test(exp) || !/^[0-9A-Z]{8}$/.test(id)) return { ok: false, reason: 'That key is incomplete or mistyped.' };
+  // common typos in the signature part: O→0, I/L→1 (Crockford base32 has no O, I, L, U)
+  const sig = b32decode(rest.join('').replace(/O/g, '0').replace(/[IL]/g, '1'));
+  if (!sig || sig.length !== 64) return { ok: false, reason: 'That key is incomplete or mistyped.' };
+  if (!(window.crypto && crypto.subtle)) return { ok: false, reason: 'Keys can only be checked on a secure (https) page.' };
+  let valid = false;
+  try {
+    const pub = await crypto.subtle.importKey('jwk', LICENSE_PUBLIC_KEY, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+    valid = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, pub, sig, new TextEncoder().encode(`CUECAST|v1|${plan}|${exp}|${id}`));
+  } catch { valid = false; }
+  if (!valid) return { ok: false, reason: 'That license key is not valid.' };
+  if (plan === 'M') {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    if (today > exp) return { ok: false, expired: true, reason: `This monthly key expired on ${exp.slice(0, 4)}-${exp.slice(4, 6)}-${exp.slice(6)}. Your renewal email has a new key.` };
+  }
+  return { ok: true, plan, exp, id, key: ['CC', plan, exp, id, rest.join('')].join('-') };
+}
+
+/* =====================================================================
+   App state
+   ===================================================================== */
+const S = {
+  scripts: store.get('scripts', null),
+  currentId: store.get('current', null),
+  settings: Object.assign({ font: 56, wpm: 140, recFont: 32, mirror: false, mode: 'fixed', lang: '' }, store.get('settings', {})),
+  pro: false, license: null
+};
+const WELCOME = `Welcome to CueCast.
+
+This is your script. Replace this text with your own — it saves automatically as you type.
+
+Press Start prompter and read along with the red line. Tap the screen or press the space bar to pause.
+
+Speed is set in words per minute, so the size of the text never changes how long your read takes. Make the words as big as you like.
+
+When you are ready, try Record video to film yourself with the script right under your camera.`;
+if (!Array.isArray(S.scripts) || !S.scripts.length) {
+  S.scripts = [{ id: 's' + Date.now().toString(36), title: 'Welcome script', text: WELCOME, updated: Date.now() }];
+}
+if (!S.scripts.some(s => s.id === S.currentId)) S.currentId = S.scripts[0].id;
+const cur = () => S.scripts.find(s => s.id === S.currentId);
+function saveScripts() {
+  const ok = store.set('scripts', S.scripts) && store.set('current', S.currentId);
+  $('#saveState').textContent = ok ? '✓ Saved on this device' : '⚠ Could not save (browser storage full or blocked)';
+  return ok;
+}
+const saveSettings = () => store.set('settings', S.settings);
+// Voice-follow needs Pro and a browser with speech recognition; the saved choice is kept either way.
+const effMode = () => (S.settings.mode === 'voice' && S.pro && SR) ? 'voice' : 'fixed';
+
+/* =====================================================================
+   Dialogs and paywall
+   ===================================================================== */
+const dlg = $('#dlg'), dlgBody = $('#dlgBody');
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+function openDialog(html) { dlg.onclose = null; dlgBody.innerHTML = html; if (!dlg.open) dlg.showModal(); return dlgBody; }
+function confirmDialog(title, text, okLabel = 'OK') {
+  return new Promise(res => {
+    const b = openDialog(`<h3>${esc(title)}</h3><p>${esc(text)}</p><div class="btns"><button data-r="0">Cancel</button><button class="primary" data-r="1">${esc(okLabel)}</button></div>`);
+    const done = v => { dlg.close(); res(v); };
+    b.querySelectorAll('[data-r]').forEach(x => x.onclick = () => done(x.dataset.r === '1'));
+    dlg.onclose = () => res(false);
+  });
+}
+function askText(title, value) {
+  return new Promise(res => {
+    const b = openDialog(`<h3>${esc(title)}</h3><input type="text" id="askIn" maxlength="120"><div class="btns"><button data-r="0">Cancel</button><button class="primary" data-r="1">Save</button></div>`);
+    const inp = $('#askIn', b); inp.value = value; setTimeout(() => { inp.focus(); inp.select(); }, 30);
+    const done = v => { dlg.onclose = null; dlg.close(); res(v); };
+    b.querySelector('[data-r="0"]').onclick = () => done(null);
+    b.querySelector('[data-r="1"]').onclick = () => done(inp.value.trim());
+    inp.onkeydown = e => { if (e.key === 'Enter') done(inp.value.trim()); };
+    dlg.onclose = () => res(null);
+  });
+}
+function goPro(reason) {
+  dlg.onclose = null;
+  if (S.pro) { licenseDialog(); return; }
+  const b = openDialog(`<h3>Go Pro <span class="pro-tag">PRO</span></h3>
+    ${reason ? `<p style="color:var(--text)"><b>${esc(reason)}</b></p>` : ''}
+    <p>Voice-follow scrolling, unlimited scripts and clean recordings with no watermark.</p>
+    <div class="plans">
+      <button data-buy="monthly"><b>$6</b><span class="muted small">per month</span></button>
+      <button data-buy="lifetime" class="primary"><b>$39</b><span class="small">one time, forever</span></button>
+    </div>
+    <p id="buyNote" class="note warn" hidden></p>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <label class="small" for="keyIn">Already have a license key?</label>
+    <textarea id="keyIn" placeholder="CC-L-00000000-XXXXXXXX-…" spellcheck="false" autocapitalize="characters"></textarea>
+    <p id="keyMsg" class="note" hidden></p>
+    <div class="btns"><button data-close>Not now</button><button class="primary" id="keyGo">Unlock Pro</button></div>`);
+  bindBuy(b); bindKeyForm(b);
+}
+function licenseDialog() {
+  dlg.onclose = null;
+  if (!S.pro) { goPro(); return; }
+  const l = S.license;
+  const b = openDialog(`<h3>CueCast Pro is active ✓</h3>
+    <p>${l.plan === 'L' ? 'Lifetime license.' : `Monthly license, valid until ${l.exp.slice(0, 4)}-${l.exp.slice(4, 6)}-${l.exp.slice(6)}.`}</p>
+    <p class="small">Key: <code style="word-break:break-all">${esc(l.key.slice(0, 24))}…</code></p>
+    <label class="small" for="keyIn">Replace with a new key</label>
+    <textarea id="keyIn" spellcheck="false"></textarea><p id="keyMsg" class="note" hidden></p>
+    <div class="btns"><button id="keyRemove">Remove key from this browser</button><button data-close>Close</button><button class="primary" id="keyGo">Use new key</button></div>`);
+  bindKeyForm(b);
+  $('#keyRemove', b).onclick = async () => {
+    store.del('license'); S.pro = false; S.license = null; refreshTier(); dlg.close(); toast('License removed from this browser.');
+  };
+}
+function bindBuy(root) {
+  root.querySelectorAll('[data-buy]').forEach(btn => btn.onclick = () => buy(btn.dataset.buy, root));
+}
+function buy(plan, root) {
+  const url = plan === 'monthly' ? CONFIG.stripeMonthly : CONFIG.stripeLifetime;
+  if (url) { location.href = url; return; }
+  const msg = 'Payments are not switched on yet — the Stripe checkout links haven\'t been added to this site, so nothing can be charged. Please check back soon.' + (CONFIG.supportEmail ? ` Questions: ${CONFIG.supportEmail}` : '');
+  const note = root && $('#buyNote', root);
+  if (note) { note.textContent = msg; note.hidden = false; }
+  else { openDialog(`<h3>Payments not switched on yet</h3><p>${esc(msg)}</p><div class="btns"><button class="primary" data-close>OK</button></div>`); }
+}
+function bindKeyForm(b) {
+  b.querySelectorAll('[data-close]').forEach(x => x.onclick = () => dlg.close());
+  const go = $('#keyGo', b), inp = $('#keyIn', b), msg = $('#keyMsg', b);
+  go.onclick = async () => {
+    go.disabled = true; msg.hidden = false; msg.className = 'note'; msg.textContent = 'Checking…';
+    const r = await activateKey(inp.value);
+    go.disabled = false;
+    msg.className = 'note ' + (r.ok ? 'ok' : 'warn'); msg.textContent = r.ok ? 'Pro unlocked. Enjoy!' : r.reason;
+    if (r.ok) setTimeout(() => dlg.open && dlg.close(), 900);
+  };
+}
+async function activateKey(raw) {
+  const r = await verifyLicense(raw);
+  if (r.ok) { store.set('license', r.key); S.pro = true; S.license = r; refreshTier(); toast('CueCast Pro unlocked ✓'); }
+  return r;
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-close]') && dlg.contains(e.target)) { dlg.close(); return; }
+  const lic = e.target.closest('[data-license]'); if (lic) { e.preventDefault(); S.pro ? licenseDialog() : goPro(); return; }
+  const by = e.target.closest('[data-buy]'); if (by && !dlg.contains(by)) { buy(by.dataset.buy); return; }
+  const sc = e.target.closest('[data-scroll]');
+  if (sc) { e.preventDefault(); const id = sc.dataset.scroll; if (route() !== 'landing') location.hash = '#/'; setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 60); }
+});
+$('#tierBtn').onclick = () => S.pro ? licenseDialog() : goPro();
+
+function refreshTier() {
+  const t = $('#tierBtn');
+  t.textContent = S.pro ? 'Pro ✓' : 'Go Pro';
+  t.classList.toggle('primary', !S.pro);
+  renderList(); renderSettings();
+  $('#tierNote').innerHTML = S.pro ? 'Pro: unlimited scripts.' : 'Free plan: 1 saved script. <a href="#" data-license>Go Pro</a> for unlimited scripts, voice-follow and clean recordings.';
+  $('#recWm').hidden = S.pro;
+}
+
+/* =====================================================================
+   Script editor
+   ===================================================================== */
+function renderList() {
+  const ul = $('#scriptList');
+  ul.innerHTML = S.scripts.slice().sort((a, b) => b.updated - a.updated).map(s => `
+    <li data-id="${s.id}" class="${s.id === S.currentId ? 'on' : ''}">
+      <div class="t" data-open><b>${esc(s.title || 'Untitled script')}</b><span>${countWords(s.text)} words</span></div>
+      <button data-rename title="Rename" aria-label="Rename">✎</button>
+      <button data-del title="Delete" aria-label="Delete">🗑</button>
+    </li>`).join('');
+}
+$('#scriptList').addEventListener('click', async e => {
+  const li = e.target.closest('li'); if (!li) return;
+  const s = S.scripts.find(x => x.id === li.dataset.id); if (!s) return;
+  if (e.target.closest('[data-open]')) { flushSave(); S.currentId = s.id; saveScripts(); loadEditor(); renderList(); }
+  else if (e.target.closest('[data-rename]')) {
+    const t = await askText('Rename script', s.title);
+    if (t != null) { s.title = t || 'Untitled script'; s.updated = Date.now(); saveScripts(); renderList(); if (s.id === S.currentId) $('#title').value = s.title; }
+  } else if (e.target.closest('[data-del]')) {
+    if (!(await confirmDialog('Delete script?', `"${s.title || 'Untitled script'}" will be removed from this device. This can't be undone.`, 'Delete'))) return;
+    S.scripts = S.scripts.filter(x => x !== s);
+    if (!S.scripts.length) S.scripts.push({ id: 's' + Date.now().toString(36), title: 'Untitled script', text: '', updated: Date.now() });
+    if (S.currentId === s.id) S.currentId = S.scripts[0].id;
+    saveScripts(); loadEditor(); renderList();
+  }
+});
+$('#newScript').onclick = () => {
+  if (!S.pro && S.scripts.length >= 1) { goPro('The free plan saves 1 script. Go Pro for unlimited scripts.'); return; }
+  flushSave();
+  const s = { id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: 'Untitled script', text: '', updated: Date.now() };
+  S.scripts.push(s); S.currentId = s.id; saveScripts(); loadEditor(); renderList();
+  $('#body').focus();
+};
+function loadEditor() {
+  const s = cur(); $('#title').value = s.title; $('#body').value = s.text; updateMeta();
+}
+function updateMeta() {
+  const n = countWords($('#body').value);
+  $('#wordCount').textContent = `${n} word${n === 1 ? '' : 's'}`;
+  $('#estTime').textContent = n ? `≈ ${fmtDur(n / S.settings.wpm * 60)} at ${S.settings.wpm} WPM` : '';
+}
+let saveT = null;
+function queueSave() { $('#saveState').textContent = 'Saving…'; clearTimeout(saveT); saveT = setTimeout(flushSave, 400); }
+function flushSave() {
+  if (saveT) { clearTimeout(saveT); saveT = null; }
+  const s = cur(); if (!s) return;
+  const title = $('#title').value.trim() || 'Untitled script', text = $('#body').value;
+  if (s.title === title && s.text === text) return;
+  s.title = title; s.text = text; s.updated = Date.now(); saveScripts(); renderList();
+}
+$('#body').addEventListener('input', () => { updateMeta(); queueSave(); });
+$('#title').addEventListener('input', queueSave);
+$('#title').addEventListener('blur', flushSave);
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+
+/* =====================================================================
+   Settings
+   ===================================================================== */
+function renderSettings() {
+  const st = S.settings;
+  $('#wpm').value = st.wpm; $('#wpmV').textContent = st.wpm + ' WPM';
+  $('#font').value = st.font; $('#fontV').textContent = st.font + 'px';
+  $('#recFont').value = st.recFont; $('#recFontV').textContent = st.recFont + 'px';
+  $('#mirror').checked = st.mirror; $('#lang').value = st.lang;
+  $$('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === effMode()));
+  const vs = voiceSupport(), note = $('#voiceSupport');
+  note.textContent = vs.text; note.className = 'note ' + (vs.level === 'good' ? 'ok' : 'warn');
+  $$('#modeSeg .pro-tag').forEach(t => t.hidden = S.pro);
+  updateMeta();
+}
+function setSetting(k, v) { S.settings[k] = v; saveSettings(); renderSettings(); }
+$('#wpm').oninput = e => setSetting('wpm', +e.target.value);
+$('#font').oninput = e => setSetting('font', +e.target.value);
+$('#recFont').oninput = e => setSetting('recFont', +e.target.value);
+$('#mirror').onchange = e => setSetting('mirror', e.target.checked);
+$('#lang').onchange = e => setSetting('lang', e.target.value);
+$('#modeSeg').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.mode === 'voice') {
+    if (!S.pro) { goPro('Voice-follow scrolling is a Pro feature.'); return; }
+    if (!SR) { toast('No speech recognition in this browser — using fixed-speed scrolling.', 4500); return; }
+  }
+  setSetting('mode', b.dataset.mode);
+};
+
+/* =====================================================================
+   Screen wake lock
+   ===================================================================== */
+const Wake = {
+  lock: null, want: false,
+  async on() {
+    this.want = true;
+    if (!('wakeLock' in navigator)) { this.show('Screen-awake is not supported in this browser — turn off auto-lock in your phone settings.'); return; }
+    if (this.lock) return;
+    try {
+      this.lock = await navigator.wakeLock.request('screen');
+      this.show('Screen will stay awake');
+      this.lock.addEventListener('release', () => { this.lock = null; if (this.want) this.show('Screen-awake paused'); });
+    } catch (e) { this.show('Could not keep the screen awake (' + (e.message || e.name) + ')'); }
+  },
+  off() { this.want = false; if (this.lock) { this.lock.release().catch(() => {}); this.lock = null; } },
+  show(t) { const el = $('#wakeState'); if (el) el.textContent = t; }
+};
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Wake.want && !Wake.lock) Wake.on(); });
+
+/* =====================================================================
+   Full-screen prompter
+   ===================================================================== */
+const P = new Prompter($('#promptHost'), {
+  exitable: true,
+  onExit: () => { location.hash = '#/app'; },
+  onState: s => syncBar($('#promptBar'), P, s),
+  onEnd: () => {}
+});
+function syncBar(bar, pr, s = pr.state) {
+  const play = $('[data-act="play"]', bar);
+  if (play) play.textContent = s === 'running' || s === 'countdown' ? '❚❚' : '▶';
+  $$('[data-v="wpm"]', bar).forEach(x => x.textContent = pr.wpm + ' wpm');
+  $$('[data-v="font"]', bar).forEach(x => x.textContent = pr.font + 'px');
+  const voice = pr.mode === 'voice';
+  $$('[data-fixed]', bar).forEach(x => x.hidden = voice);
+  $$('[data-voice]', bar).forEach(x => x.hidden = !voice);
+  $$('[data-act="voice"]', bar).forEach(x => x.classList.toggle('on', voice));
+  $$('[data-act="mirror"]', bar).forEach(x => x.classList.toggle('on', S.settings.mirror));
+}
+function adjust(pr, act, fontKey) {
+  const st = S.settings;
+  if (act === 'faster' || act === 'slower') { st.wpm = clamp(st.wpm + (act === 'faster' ? 5 : -5), 60, 220); pr.setWpm(st.wpm); }
+  else if (act === 'bigger' || act === 'smaller') { st[fontKey] = clamp(st[fontKey] + (act === 'bigger' ? 4 : -4), 24, 160); pr.setFont(st[fontKey]); }
+  else if (act === 'voice') {
+    if (!S.pro) { pr.pause(); goPro('Voice-follow scrolling is a Pro feature.'); return; }
+    if (!SR) { toast('This browser has no speech recognition — staying on fixed-speed scrolling. Try Chrome.', 4500); return; }
+    st.mode = pr.mode === 'voice' ? 'fixed' : 'voice'; pr.setMode(st.mode, st.lang);
+    toast(st.mode === 'voice' ? 'Voice-follow on — start reading' : 'Fixed-speed scrolling');
+  }
+  saveSettings(); renderSettings();
+}
+$('#promptBar').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'exit') location.hash = '#/app';
+  else if (act === 'restart') P.start();
+  else if (act === 'play') P.toggle();
+  else if (act === 'nextline') P.nextLine();
+  else if (act === 'mirror') { S.settings.mirror = !S.settings.mirror; P.setMirror(S.settings.mirror); saveSettings(); renderSettings(); }
+  else if (act === 'fs') toggleFs();
+  else adjust(P, act, 'font');
+  syncBar($('#promptBar'), P);
+});
+function toggleFs() {
+  const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+  else if (el.requestFullscreen || el.webkitRequestFullscreen) (el.requestFullscreen || el.webkitRequestFullscreen).call(el).catch?.(() => {});
+  else toast('Full screen is not available in this browser. On iPhone, use "Add to Home Screen".');
+}
+function openPrompter() {
+  flushSave();
+  const s = cur(), st = S.settings;
+  P.setWpm(st.wpm); P.setMirror(st.mirror); P.load(s.text); P.setFont(st.font); P.setMode(effMode(), st.lang);
+  P.activate(); syncBar($('#promptBar'), P);
+  P.start();
+  Wake.on();
+  if (st.mode === 'voice' && S.pro && !SR) toast('No speech recognition here — scrolling at a fixed speed.', 4500);
+}
+document.addEventListener('keydown', e => {
+  const r = route();
+  if (r !== 'prompt' && r !== 'record') return;
+  if (e.target.matches('input, textarea, select') || dlg.open) return;
+  const pr = r === 'prompt' ? P : R.pr, fk = r === 'prompt' ? 'font' : 'recFont';
+  const k = e.key;
+  if (k === ' ' || k === 'Spacebar') { e.preventDefault(); r === 'prompt' ? P.toggle() : R.pr.o.onTap(); }
+  else if (k === 'ArrowUp') { e.preventDefault(); adjust(pr, 'faster', fk); }
+  else if (k === 'ArrowDown') { e.preventDefault(); adjust(pr, 'slower', fk); }
+  else if (k === '+' || k === '=') adjust(pr, 'bigger', fk);
+  else if (k === '-' || k === '_') adjust(pr, 'smaller', fk);
+  else if ((k === 'r' || k === 'R') && r === 'prompt') P.start();
+  else if ((k === 'm' || k === 'M') && r === 'prompt') { S.settings.mirror = !S.settings.mirror; P.setMirror(S.settings.mirror); saveSettings(); renderSettings(); }
+  else if (k === 'Escape' && r === 'prompt') location.hash = '#/app';
+  else return;
+  syncBar(r === 'prompt' ? $('#promptBar') : $('#recBar'), pr);
+});
+
+/* =====================================================================
+   Camera recording
+   ===================================================================== */
+const R = {
+  stream: null, facing: 'user', recorder: null, chunks: [], canvas: document.createElement('canvas'), drawing: false,
+  t0: 0, timer: null, url: null, mime: '', pr: null
+};
+R.ctx = R.canvas.getContext('2d');
+R.pr = new Prompter($('#recHost'), {
+  onState: s => syncBar($('#recBar'), R.pr, s),
+  onTap: () => { if (R.pr.state === 'running') R.pr.pause(); else if (R.pr.state === 'paused') R.pr.resume(); else if (!R.recording()) startRecording(); }
+});
+R.recording = () => R.recorder && R.recorder.state === 'recording';
+function pickMime() {
+  if (!window.MediaRecorder) return null;
+  const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+  return list.find(t => MediaRecorder.isTypeSupported?.(t)) || '';
+}
+const camConstraints = facing => ({ facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } });
+async function openRecorder() {
+  flushSave();
+  const st = S.settings;
+  $('#take').hidden = true;
+  R.pr.setWpm(st.wpm); R.pr.load(cur().text); R.pr.setFont(st.recFont); R.pr.setMode(effMode(), st.lang); R.pr.activate();
+  syncBar($('#recBar'), R.pr); $('#recWm').hidden = S.pro;
+  $('#recTimer').textContent = '00:00'; $('#recTimer').classList.remove('on');
+  Wake.on();
+  await startCamera();
+}
+async function startCamera() {
+  const msg = $('#camMsg'); msg.hidden = false; msg.textContent = 'Starting camera…';
+  if (!navigator.mediaDevices?.getUserMedia) { msg.textContent = 'Camera recording is not available here. It needs a secure (https) page in a modern browser.'; return false; }
+  if (!window.MediaRecorder) { msg.textContent = 'This browser cannot record video (no MediaRecorder). Try Chrome, Edge, Firefox or Safari 14.1+.'; return false; }
+  try {
+    R.stream = await navigator.mediaDevices.getUserMedia({ video: camConstraints(R.facing), audio: { echoCancellation: true, noiseSuppression: true } });
+  } catch (e) {
+    msg.textContent = e.name === 'NotAllowedError' ? 'Camera or microphone permission was blocked. Allow it in your browser\'s address bar, then reopen recording.'
+      : e.name === 'NotFoundError' ? 'No camera or microphone was found on this device.' : 'Could not start the camera: ' + (e.message || e.name);
+    return false;
+  }
+  const v = $('#cam'); v.srcObject = R.stream; v.classList.toggle('mirror', R.facing === 'user');
+  try { await v.play(); } catch {}
+  msg.hidden = true;
+  return true;
+}
+function stopCamera() { R.stream?.getTracks().forEach(t => t.stop()); R.stream = null; $('#cam').srcObject = null; }
+async function flipCamera() {
+  if (R.recording()) { toast('Stop recording before switching cameras.'); return; }
+  R.facing = R.facing === 'user' ? 'environment' : 'user';
+  if (!R.stream) { await startCamera(); return; }
+  try {
+    const ns = await navigator.mediaDevices.getUserMedia({ video: camConstraints(R.facing), audio: false });
+    R.stream.getVideoTracks().forEach(t => { t.stop(); R.stream.removeTrack(t); });
+    R.stream.addTrack(ns.getVideoTracks()[0]);
+    const v = $('#cam'); v.srcObject = null; v.srcObject = R.stream; v.classList.toggle('mirror', R.facing === 'user'); v.play().catch(() => {});
+  } catch (e) { R.facing = R.facing === 'user' ? 'environment' : 'user'; toast('Could not switch camera: ' + (e.message || e.name)); }
+}
+function drawWatermark(ctx, w, h) {
+  const fs = Math.round(Math.max(18, Math.min(w, h) * 0.05));
+  const text = 'Made with CueCast Free';
+  ctx.font = `700 ${fs}px system-ui, -apple-system, Segoe UI, Roboto, sans-serif`;
+  const tw = ctx.measureText(text).width, pad = fs * 0.5, bw = tw + pad * 2, bh = fs * 1.6;
+  const x = w - bw - fs * 0.8, y = h - bh - fs * 0.8;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, fs * 0.35); else ctx.rect(x, y, bw, bh);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + pad, y + bh / 2);
+}
+function drawFrame() {
+  if (!R.drawing) return;
+  const v = $('#cam'), c = R.canvas;
+  if (v.videoWidth) {
+    if (c.width !== v.videoWidth || c.height !== v.videoHeight) { c.width = v.videoWidth; c.height = v.videoHeight; }
+    R.ctx.drawImage(v, 0, 0, c.width, c.height);
+    if (!R.clean) drawWatermark(R.ctx, c.width, c.height);
+  }
+  requestAnimationFrame(drawFrame);
+}
+async function startRecording() {
+  if (R.recording()) return;
+  if (!R.stream && !(await startCamera())) return;
+  const mime = pickMime();
+  if (mime === null) { toast('This browser cannot record video.'); return; }
+  $('#take').hidden = true;
+  $('#recBtn').disabled = true;
+  R.pr.start(() => {
+    // Recording starts when the countdown ends, together with scrolling.
+    R.clean = S.pro; R.drawing = true; drawFrame();
+    const vs = R.canvas.captureStream(30);
+    const mixed = new MediaStream([...vs.getVideoTracks(), ...R.stream.getAudioTracks()]);
+    try { R.recorder = new MediaRecorder(mixed, mime ? { mimeType: mime, videoBitsPerSecond: 5e6 } : undefined); }
+    catch { R.recorder = new MediaRecorder(mixed); }
+    R.mime = R.recorder.mimeType || mime || 'video/webm';
+    R.chunks = [];
+    R.recorder.ondataavailable = e => { if (e.data && e.data.size) R.chunks.push(e.data); };
+    R.recorder.onstop = () => { vs.getTracks().forEach(t => t.stop()); R.drawing = false; showTake(); };
+    R.recorder.start(1000);
+    R.t0 = Date.now(); $('#recTimer').classList.add('on');
+    R.timer = setInterval(() => $('#recTimer').textContent = mmss(Date.now() - R.t0), 250);
+    const b = $('#recBtn'); b.disabled = false; b.textContent = '■ Stop'; b.classList.add('stop');
+  });
+  // if the countdown is cancelled, re-enable the button
+  setTimeout(() => { if (R.pr.state === 'idle') $('#recBtn').disabled = false; }, 3200);
+}
+function stopRecording() {
+  if (R.pr.state === 'countdown') { R.pr.reset(); $('#recBtn').disabled = false; return; }
+  if (!R.recording()) return;
+  R.recorder.stop(); clearInterval(R.timer); R.pr.pause();
+  $('#recTimer').classList.remove('on');
+  const b = $('#recBtn'); b.textContent = '● Record'; b.classList.remove('stop');
+}
+function showTake() {
+  const blob = new Blob(R.chunks, { type: R.mime.split(';')[0] });
+  if (R.url) URL.revokeObjectURL(R.url);
+  R.url = URL.createObjectURL(blob);
+  const ext = /mp4/.test(R.mime) ? 'mp4' : 'webm';
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  const name = `cuecast-take-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
+  const tv = $('#takeVideo'); tv.src = R.url;
+  // Chrome's WebM recordings have no duration header; seek to the end once so the player learns it.
+  tv.onloadedmetadata = () => {
+    if (tv.duration !== Infinity) return;
+    tv.ontimeupdate = () => { tv.ontimeupdate = null; tv.currentTime = 0; };
+    tv.currentTime = 1e101;
+  };
+  const dl = $('#takeDl'); dl.href = R.url; dl.download = name;
+  $('#takeInfo').textContent = `${mmss(Date.now() - R.t0)} · ${(blob.size / 1048576).toFixed(1)} MB · ${ext.toUpperCase()}${R.clean ? ' · no watermark (Pro)' : ' · watermarked (Free plan)'}`;
+  $('#take').hidden = false;
+  R.lastBlob = blob;
+}
+$('#recBar').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'close') location.hash = '#/app';
+  else if (act === 'flip') flipCamera();
+  else if (act === 'rec') R.recording() || R.pr.state === 'countdown' ? stopRecording() : startRecording();
+  else adjust(R.pr, act, 'recFont');
+  syncBar($('#recBar'), R.pr);
+});
+$('#takeAgain').onclick = () => { $('#take').hidden = true; $('#takeVideo').pause(); R.pr.reset(); startRecording(); };
+$('#takeDone').onclick = () => { $('#take').hidden = true; $('#takeVideo').pause(); R.pr.reset(); };
+function closeRecorder() {
+  if (R.recording()) { R.recorder.onstop = () => { R.drawing = false; }; R.recorder.stop(); clearInterval(R.timer); }
+  R.drawing = false; R.pr.deactivate(); stopCamera(); $('#takeVideo').pause();
+  const b = $('#recBtn'); b.textContent = '● Record'; b.classList.remove('stop'); b.disabled = false;
+}
+
+/* =====================================================================
+   Landing demo
+   ===================================================================== */
+const DEMO_TEXT = `Hi, I'm testing CueCast, the teleprompter that runs right in my browser.
+
+I can read at a steady pace measured in real words per minute, so my video comes out just the length I planned.
+
+Watch the red line. Keep your eyes there and the words come to you.
+
+Try making the text bigger or smaller while it scrolls. The speed stays exactly the same.
+
+When you're ready, open the app, paste your own script, and record your next video.`;
+const D = new Prompter($('#demoHost'), { onState: s => $('#demoPlay').textContent = s === 'running' || s === 'countdown' ? '❚❚ Pause' : s === 'ended' ? '⟲ Again' : '▶ Try it' });
+D.setWpm(130); D.load(DEMO_TEXT); D.setFont(34);
+$('#demoPlay').onclick = () => D.toggle();
+$('#demoRestart').onclick = () => D.start();
+$('#demoWpm').oninput = e => { D.setWpm(+e.target.value); $('#demoWpmV').textContent = e.target.value; };
+$('#demoFont').oninput = e => D.setFont(+e.target.value);
+$('#demoMirror').onchange = e => D.setMirror(e.target.checked);
+
+/* =====================================================================
+   Routing
+   ===================================================================== */
+function route() {
+  const h = location.hash;
+  if (h.startsWith('#/app')) return 'app';
+  if (h === '#/prompt') return 'prompt';
+  if (h === '#/record') return 'record';
+  return 'landing';
+}
+let lastRoute = null;
+function onRoute() {
+  const r = route();
+  if (lastRoute === 'prompt' && r !== 'prompt') { P.deactivate(); Wake.off(); if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {}); }
+  if (lastRoute === 'record' && r !== 'record') { closeRecorder(); Wake.off(); }
+  if (lastRoute === 'landing' && r !== 'landing') D.deactivate();
+  $('#view-landing').hidden = r !== 'landing';
+  $('#view-app').hidden = r !== 'app';
+  $('#layer-prompt').hidden = r !== 'prompt';
+  $('#layer-record').hidden = r !== 'record';
+  document.body.style.overflow = r === 'prompt' || r === 'record' ? 'hidden' : '';
+  if (r === 'landing') { D.activate(); document.title = 'CueCast — Voice-Follow Teleprompter'; }
+  if (r === 'app') { loadEditor(); renderList(); document.title = 'CueCast — Scripts'; }
+  if (r === 'prompt' && lastRoute !== 'prompt') { openPrompter(); document.title = 'CueCast — Prompter'; }
+  if (r === 'record' && lastRoute !== 'record') { openRecorder(); document.title = 'CueCast — Record'; }
+  lastRoute = r;
+}
+window.addEventListener('hashchange', onRoute);
+$('#goPrompt').onclick = () => { location.hash = '#/prompt'; };
+$('#goRecord').onclick = () => { location.hash = '#/record'; };
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+(async function boot() {
+  // One-click activation links: https://yoursite/?key=CC-...  or  #key=CC-...
+  const qs = new URLSearchParams(location.search), hk = location.hash.match(/^#key=(.+)$/);
+  const linkKey = qs.get('key') || (hk && decodeURIComponent(hk[1]));
+  if (linkKey) history.replaceState(null, '', location.pathname + '#/app');
+  saveScripts(); renderSettings(); refreshTier(); onRoute();
+  const stored = store.get('license', null);
+  if (stored) {
+    const r = await verifyLicense(stored);
+    if (r.ok) { S.pro = true; S.license = r; }
+    else if (r.expired) toast(r.reason, 6000);
+    refreshTier();
+  }
+  if (linkKey) {
+    const r = await activateKey(linkKey);
+    if (!r.ok) openDialog(`<h3>License key problem</h3><p>${esc(r.reason)}</p><div class="btns"><button class="primary" data-close>OK</button></div>`);
+  }
+})();
+
+// Exposed for automated tests.
+window.CueCast = { Prompter, VoiceMatcher, VoiceFollow, verifyLicense, activateKey, S, P, R, D, norm };
+</script>
+</body>
+</html>
